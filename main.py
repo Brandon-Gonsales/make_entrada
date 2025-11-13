@@ -67,7 +67,7 @@ def crear_imagen_con_plantilla(data: EntradaRequest) -> io.BytesIO:
 
         # Definimos un margen para que no quede pegado a los bordes
         margen_derecho = 40
-        margen_inferior = 35
+        margen_inferior = 5
 
         # Calculamos la posición (x, y) de la esquina superior izquierda del texto
         posicion_id = (
