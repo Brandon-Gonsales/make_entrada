@@ -22,6 +22,7 @@ app = FastAPI(
 # MODELO DE DATOS
 # --------------------------------------------------------------------------
 class EntradaRequest(BaseModel):
+    id_entrada: str = Field(..., example="#00001-A8B2")
     nombre: str = Field(..., example="Mariana Castillo")
     monto_pagado: str = Field(..., example="Bs. 100")
     metodo_pago: str = Field(..., example="QR Simple")
@@ -51,7 +52,34 @@ def crear_imagen_con_plantilla(data: EntradaRequest) -> io.BytesIO:
         draw.text((437, 490), data.nombre, font=font_valor_nombre, fill=color_texto)
         draw.text((437, 540), data.monto_pagado, font=font_valor_regular, fill=color_texto)
         draw.text((437, 590), data.metodo_pago, font=font_valor_regular, fill=color_texto)
+        # ==================================================================
+        # INICIO DEL CÓDIGO AÑADIDO PARA EL ID
+        # ==================================================================
+        # --- 2.5. Escritura del ID en la esquina inferior derecha ---
+        font_id = ImageFont.truetype(ruta_font_regular, 24)
+        color_id = "#616161"  # Un color gris para que no sea tan prominente
+        texto_id = data.id_entrada
 
+        # Medimos el tamaño del texto para saber dónde posicionarlo
+        ancho_plantilla, alto_plantilla = plantilla.size
+        bbox_id = draw.textbbox((0, 0), texto_id, font=font_id)
+        ancho_texto_id = bbox_id[2] - bbox_id[0]
+
+        # Definimos un margen para que no quede pegado a los bordes
+        margen_derecho = 40
+        margen_inferior = 35
+
+        # Calculamos la posición (x, y) de la esquina superior izquierda del texto
+        posicion_id = (
+            ancho_plantilla - ancho_texto_id - margen_derecho,
+            alto_plantilla - bbox_id[3] - margen_inferior
+        )
+        
+        # Finalmente, dibujamos el texto en la imagen
+        draw.text(posicion_id, texto_id, font=font_id, fill=color_id)
+        # ==================================================================
+        # FIN DEL CÓDIGO AÑADIDO
+        # ==================================================================
         # --- 3. Generación de QR ---
         qr = qrcode.QRCode(
             version=1,
