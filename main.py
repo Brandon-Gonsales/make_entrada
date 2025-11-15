@@ -4,18 +4,19 @@
 import os
 import io
 import qrcode
-from fastapi import FastAPI, HTTPException, Body
+from fastapi import FastAPI, HTTPException, Body, File, UploadFile
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from PIL import Image, ImageDraw, ImageFont
 
+from cloudinary_uploader import subir_a_cloudinary
 # --------------------------------------------------------------------------
 # INICIALIZACIÓN DE LA APP
 # --------------------------------------------------------------------------
 app = FastAPI(
-    title="API Generadora de Entradas con Plantilla",
-    description="Una API para crear imágenes de entradas usando la librería Pillow.",
-    version="7.1.1 (Corrección QR)"
+    title="API Generadora y de Subida de Entradas (con Cloudinary)",
+    description="Una API con dos endpoints: uno para crear la imagen y otro para subirla a Cloudinary.",
+    version="10.0.0 (Migración a Cloudinary)"
 )
 
 # --------------------------------------------------------------------------
@@ -28,6 +29,9 @@ class EntradaRequest(BaseModel):
     metodo_pago: str = Field(..., example="QR Simple")
     datos_qr: str = Field(..., example="GARGOLA-2025-TICKET-D4E5F6")
 
+class UploadResponse(BaseModel):
+    url: str = Field(..., example="https://res.cloudinary.com/...") # Cambiado a 'url' genérico
+    filename: str = Field(..., example="entrada-A8B2.png")
 # --------------------------------------------------------------------------
 # LÓGICA DE GENERACIÓN DE IMAGEN
 # --------------------------------------------------------------------------
@@ -129,3 +133,21 @@ async def endpoint_generar_entrada(datos_entrada: EntradaRequest = Body(...)):
     except Exception as e:
         print(f"Error inesperado en el endpoint: {e}")
         raise HTTPException(status_code=500, detail=f"Ocurrió un error inesperado: {e}")
+
+@app.post("/subir-imagen", response_model=UploadResponse) # Renombré la ruta para más claridad
+async def endpoint_subir_imagen(file: UploadFile = File(...)):
+    """
+    Recibe un archivo de imagen, lo sube a Cloudinary y devuelve la URL pública.
+    """
+    try:
+        contenido_imagen = await file.read()
+        buffer_para_subir = io.BytesIO(contenido_imagen)
+        
+        # --- ¡ESTE ES EL ÚNICO CAMBIO LÓGICO! ---
+        # Llamamos a la nueva función de Cloudinary
+        url_publica = subir_a_cloudinary(buffer_para_subir, file.filename)
+        
+        return {"url": url_publica, "filename": file.filename}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Ocurrió un error inesperado al subir: {e}")

@@ -3,3 +3,5 @@ uvicorn
 pillow
 qrcode
 pydantic
+cloudinary
+python-dotenv

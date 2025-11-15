@@ -1,0 +1,6 @@
+# Ignorar archivos de credenciales y variables de entorno
+credentials.json
+.env
+
+# Ignorar carpetas de caché de Python
+__pycache__/
